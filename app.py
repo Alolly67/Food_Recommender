@@ -87,8 +87,8 @@ def food_recommendation():
         if (bmi < 25):
              response = {
                 'food_data': {
+                    'Name': food_data['Name'],
                     'foodContents':{
-                        'Name': food_data['Name'],
                         'FatContent': food_data['FatContent'],
                         'SaturatedFatContent': food_data['SaturatedFatContent'],
                         'CholesterolContent': food_data['CholesterolContent'],
@@ -115,8 +115,8 @@ def food_recommendation():
         
         response = {
                'food_data': {
+                    'Name': food_data['Name'],
                     'foodContents':{
-                        'Name': food_data['Name'],
                         'FatContent': food_data['FatContent'],
                         'SaturatedFatContent': food_data['SaturatedFatContent'],
                         'CholesterolContent': food_data['CholesterolContent'],
@@ -131,8 +131,8 @@ def food_recommendation():
                     'Images': clean_data(food_data['Images'])
                 },
                 'nearest_recipe': {
+                    'Name': df.iloc[nn_recipe_idx]['Name'],
                     'foodContents':{
-                        'Name': df.iloc[nn_recipe_idx]['Name'],
                         'FatContent': df.iloc[nn_recipe_idx]['FatContent'],
                         'SaturatedFatContent': df.iloc[nn_recipe_idx]['SaturatedFatContent'],
                         'CholesterolContent': df.iloc[nn_recipe_idx]['CholesterolContent'],
@@ -147,8 +147,8 @@ def food_recommendation():
                     'Images': clean_data(food_data['Images'])
                 },
                 'similar_food_with_less_calories': {
+                    'Name': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Name'],
                     'foodContents':{
-                        'Name': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Name'],
                         'FatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['FatContent'],
                         'SaturatedFatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SaturatedFatContent'],
                         'CholesterolContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['CholesterolContent'],

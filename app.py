@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.naive_bayes import GaussianNB
+from flask_cors import CORS
 
 # Load the dataset
 df = pd.read_csv('recipes.csv', low_memory=False)
@@ -14,7 +15,7 @@ df = pd.read_csv('recipes.csv', low_memory=False)
 df = df[['RecipeId', 'Barcode', 'Name', 'CookTime', 'PrepTime', 'TotalTime', 'Calories',
        'FatContent', 'SaturatedFatContent', 'CholesterolContent',
        'SodiumContent', 'CarbohydrateContent', 'FiberContent', 'SugarContent',
-       'ProteinContent', 'RecipeServings', 'DatePublished', 'RecipeInstructions']]
+       'ProteinContent', 'RecipeServings', 'DatePublished', 'RecipeInstructions', 'Images']]
 
 # Handle fields with null values
 df[df.isnull().any(axis=1)]
@@ -55,8 +56,14 @@ nb_model.fit(features, target)
 
 # Flask App Setup
 app = Flask(__name__)
+CORS(app)
 
-@app.route("/food-recommendation")
+def clean_data(data_string):
+    data_to_list = [data_str.strip('" ') for data_str in data_string[3:-3].split('", "')]
+    return data_to_list
+    
+
+@app.route("/food-recommendation", methods=['GET'])
 # Food Recommendation Resource
 def food_recommendation():
      try:
@@ -80,17 +87,20 @@ def food_recommendation():
         if (bmi < 25):
              response = {
                 'food_data': {
-                    'Name': food_data['Name'],
-                    'FatContent': food_data['FatContent'],
-                    'SaturatedFatContent': food_data['SaturatedFatContent'],
-                    'CholesterolContent': food_data['CholesterolContent'],
-                    'SodiumContent': food_data['SodiumContent'],
-                    'CarbohydrateContent': food_data['CarbohydrateContent'],
-                    'FiberContent': food_data['FiberContent'],
-                    'SugarContent': food_data['SugarContent'],
-                    'ProteinContent': food_data['ProteinContent'],
-                    'Calories': food_data['Calories'],
-                    'RecipeInstructions': food_data['RecipeInstructions']
+                    'foodContents':{
+                        'Name': food_data['Name'],
+                        'FatContent': food_data['FatContent'],
+                        'SaturatedFatContent': food_data['SaturatedFatContent'],
+                        'CholesterolContent': food_data['CholesterolContent'],
+                        'SodiumContent': food_data['SodiumContent'],
+                        'CarbohydrateContent': food_data['CarbohydrateContent'],
+                        'FiberContent': food_data['FiberContent'],
+                        'SugarContent': food_data['SugarContent'],
+                        'ProteinContent': food_data['ProteinContent'],
+                        'Calories': food_data['Calories']
+                    },
+                    'RecipeInstructions': clean_data(food_data['RecipeInstructions']),
+                    'Images': clean_data(food_data['Images'])
                }   
             }
              return jsonify(response), 200
@@ -105,43 +115,52 @@ def food_recommendation():
         
         response = {
                'food_data': {
-                    'Name': food_data['Name'],
-                    'FatContent': food_data['FatContent'],
-                    'SaturatedFatContent': food_data['SaturatedFatContent'],
-                    'CholesterolContent': food_data['CholesterolContent'],
-                    'SodiumContent': food_data['SodiumContent'],
-                    'CarbohydrateContent': food_data['CarbohydrateContent'],
-                    'FiberContent': food_data['FiberContent'],
-                    'SugarContent': food_data['SugarContent'],
-                    'ProteinContent': food_data['ProteinContent'],
-                    'Calories': food_data['Calories'],
-                    'RecipeInstructions': food_data['RecipeInstructions']
+                    'foodContents':{
+                        'Name': food_data['Name'],
+                        'FatContent': food_data['FatContent'],
+                        'SaturatedFatContent': food_data['SaturatedFatContent'],
+                        'CholesterolContent': food_data['CholesterolContent'],
+                        'SodiumContent': food_data['SodiumContent'],
+                        'CarbohydrateContent': food_data['CarbohydrateContent'],
+                        'FiberContent': food_data['FiberContent'],
+                        'SugarContent': food_data['SugarContent'],
+                        'ProteinContent': food_data['ProteinContent'],
+                        'Calories': food_data['Calories'],
+                    },
+                    'RecipeInstructions': clean_data(food_data['RecipeInstructions']),
+                    'Images': clean_data(food_data['Images'])
                 },
                 'nearest_recipe': {
-                    'Name': df.iloc[nn_recipe_idx]['Name'],
-                    'FatContent': df.iloc[nn_recipe_idx]['FatContent'],
-                    'SaturatedFatContent': df.iloc[nn_recipe_idx]['SaturatedFatContent'],
-                    'CholesterolContent': df.iloc[nn_recipe_idx]['CholesterolContent'],
-                    'SodiumContent': df.iloc[nn_recipe_idx]['SodiumContent'],
-                    'CarbohydrateContent': df.iloc[nn_recipe_idx]['CarbohydrateContent'],
-                    'FiberContent': df.iloc[nn_recipe_idx]['FiberContent'],
-                    'SugarContent': df.iloc[nn_recipe_idx]['SugarContent'],
-                    'ProteinContent': df.iloc[nn_recipe_idx]['ProteinContent'],
-                    'Calories': df.iloc[nn_recipe_idx]['Calories'],
-                    'RecipeInstructions': df.iloc[nn_recipe_idx]['RecipeInstructions']
+                    'foodContents':{
+                        'Name': df.iloc[nn_recipe_idx]['Name'],
+                        'FatContent': df.iloc[nn_recipe_idx]['FatContent'],
+                        'SaturatedFatContent': df.iloc[nn_recipe_idx]['SaturatedFatContent'],
+                        'CholesterolContent': df.iloc[nn_recipe_idx]['CholesterolContent'],
+                        'SodiumContent': df.iloc[nn_recipe_idx]['SodiumContent'],
+                        'CarbohydrateContent': df.iloc[nn_recipe_idx]['CarbohydrateContent'],
+                        'FiberContent': df.iloc[nn_recipe_idx]['FiberContent'],
+                        'SugarContent': df.iloc[nn_recipe_idx]['SugarContent'],
+                        'ProteinContent': df.iloc[nn_recipe_idx]['ProteinContent'],
+                        'Calories': df.iloc[nn_recipe_idx]['Calories']
+                    },
+                    'RecipeInstructions': clean_data(df.iloc[nn_recipe_idx]['RecipeInstructions']),
+                    'Images': clean_data(food_data['Images'])
                 },
                 'similar_food_with_less_calories': {
-                    'Name': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Name'],
-                    'FatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['FatContent'],
-                    'SaturatedFatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SaturatedFatContent'],
-                    'CholesterolContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['CholesterolContent'],
-                    'SodiumContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SodiumContent'],
-                    'CarbohydrateContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['CarbohydrateContent'],
-                    'FiberContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['FiberContent'],
-                    'SugarContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SugarContent'],
-                    'ProteinContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['ProteinContent'],
-                    'Calories': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Calories'],
-                    'RecipeInstructions': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['RecipeInstructions']
+                    'foodContents':{
+                        'Name': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Name'],
+                        'FatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['FatContent'],
+                        'SaturatedFatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SaturatedFatContent'],
+                        'CholesterolContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['CholesterolContent'],
+                        'SodiumContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SodiumContent'],
+                        'CarbohydrateContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['CarbohydrateContent'],
+                        'FiberContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['FiberContent'],
+                        'SugarContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SugarContent'],
+                        'ProteinContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['ProteinContent'],
+                        'Calories': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Calories']
+                    },
+                    'RecipeInstructions': clean_data(df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['RecipeInstructions']),
+                    'Images': clean_data(df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Images'])
                 }
             }
         return jsonify(response), 200
@@ -156,4 +175,4 @@ def food_recommendation():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='192.168.14.226', port=5000)

@@ -31,12 +31,16 @@ df['TotalTime'] = df['TotalTime'].str.extract('(\d+)').astype(float) * 60
 # Convert Barcode to digits
 df['Barcode'] = df['Barcode'].str.extract('(\d+)').astype(int)
 
+# Fetch food data with calories less than 400
+calorie_limit = 400
+low_calories_data = df[df['Calories'] < calorie_limit]
+
 # Encode the target variable using LabelEncoder
 label_encoder = LabelEncoder()
-calories_encoded = label_encoder.fit_transform(df['Calories'])
+calories_encoded = label_encoder.fit_transform(low_calories_data['Calories'])
 
 # Feature extraction
-features = df[['FatContent', 'SaturatedFatContent', 'CholesterolContent',
+features = low_calories_data[['FatContent', 'SaturatedFatContent', 'CholesterolContent',
                  'SodiumContent', 'CarbohydrateContent', 'FiberContent',
                  'SugarContent', 'ProteinContent']]
 
@@ -84,7 +88,7 @@ def food_recommendation():
         
         food_data = df[df['Barcode'] == barcode].iloc[0]  # Extract the row as a Series
         
-        if (bmi < 25):
+        if ((bmi < 25 ) or (food_data['Calories'] < calorie_limit)):
              response = {
                 'food_data': {
                     'Name': food_data['Name'],
@@ -110,9 +114,9 @@ def food_recommendation():
      
 
         # Use Naive Bayes to find a similar recipe with fewer calories
-        calorie_limit = 400
         similar_food_idx = nb_model.predict(barcode_data)[0]
-        
+        print(similar_food_idx)
+        similar_food = df[df['Calories'] < calorie_limit].iloc[similar_food_idx]
         response = {
                'food_data': {
                     'Name': food_data['Name'],
@@ -147,31 +151,33 @@ def food_recommendation():
                     'Images': clean_data(food_data['Images'])
                 },
                 'similar_food_with_less_calories': {
-                    'Name': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Name'],
+                    'Name': similar_food['Name'],
                     'foodContents':{
-                        'FatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['FatContent'],
-                        'SaturatedFatContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SaturatedFatContent'],
-                        'CholesterolContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['CholesterolContent'],
-                        'SodiumContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SodiumContent'],
-                        'CarbohydrateContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['CarbohydrateContent'],
-                        'FiberContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['FiberContent'],
-                        'SugarContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['SugarContent'],
-                        'ProteinContent': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['ProteinContent'],
-                        'Calories': df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Calories']
+                        'FatContent': similar_food['FatContent'],
+                        'SaturatedFatContent': similar_food['SaturatedFatContent'],
+                        'CholesterolContent': similar_food['CholesterolContent'],
+                        'SodiumContent': similar_food['SodiumContent'],
+                        'CarbohydrateContent': similar_food['CarbohydrateContent'],
+                        'FiberContent': similar_food['FiberContent'],
+                        'SugarContent': similar_food['SugarContent'],
+                        'ProteinContent': similar_food['ProteinContent'],
+                        'Calories': similar_food['Calories']
                     },
-                    'RecipeInstructions': clean_data(df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['RecipeInstructions']),
-                    'Images': clean_data(df[df['Calories'] < calorie_limit].iloc[similar_food_idx]['Images'])
+                    'RecipeInstructions': clean_data (similar_food['RecipeInstructions']),
+                    'Images': clean_data (similar_food['Images'])
                 }
             }
         return jsonify(response), 200
    
      except ValueError as e:
           error_traceback = traceback.format_exc()
-          return jsonify({'error': str(e), 'traceback': error_traceback}), 400  # Bad Request
+          print({'error': str(e), 'traceback': error_traceback})
+          return jsonify({'error': 'Food Data Not Found.'}), 400  # Bad Request
        
      except Exception as e:
           error_traceback = traceback.format_exc()
-          return jsonify({'error': str(e), 'message': 'An unexpected error occurred.', 'traceback': error_traceback}), 500  # Internal Server Error
+          print({'error': str(e), 'traceback': error_traceback})
+          return jsonify({'error': 'An unexpected error occurred.'}), 500  # Internal Server Error
 
 
 if __name__ == '__main__':

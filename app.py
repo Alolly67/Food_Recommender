@@ -7,9 +7,17 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.naive_bayes import GaussianNB
 from flask_cors import CORS
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the CSV link from the environment variable
+csv_link = os.getenv("CSV_LINK")
 
 # Load the dataset
-df = pd.read_csv('recipes.csv', low_memory=False)
+df = pd.read_csv(csv_link, low_memory=False)
 
 # Select necessary columns
 df = df[['RecipeId', 'Barcode', 'Name', 'CookTime', 'PrepTime', 'TotalTime', 'Calories',

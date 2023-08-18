@@ -7,6 +7,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.naive_bayes import GaussianNB
 from flask_cors import CORS
+import re
 import os
 from dotenv import load_dotenv
 
@@ -33,8 +34,20 @@ df = df.dropna()
 
 # # Convert cook, prep, and total time to numeric values in minutes
 df['CookTime'] = df['CookTime'].str.extract('(\d+)').astype(float) * 60
-df['PrepTime'] = df['PrepTime'].str.extract('(\d+)').astype(float) * 60
+df['PrepTime'] = df['PrepTime'].str.replace('PT', '')
+# df['PrepTime'] = df['PrepTime'].str.extract('(\d+)').astype(float)
 df['TotalTime'] = df['TotalTime'].str.extract('(\d+)').astype(float) * 60
+
+# Convert food contents to numeric
+df["Calories"] = df["Calories"].astype(float)
+df["FatContent"] = df["FatContent"].astype(float)
+df["SaturatedFatContent"] = df["SaturatedFatContent"].astype(float)
+df["CholesterolContent"] = df["CholesterolContent"].astype(float)
+df["SodiumContent"] = df["SodiumContent"].astype(float)
+df["CarbohydrateContent"] = df["CarbohydrateContent"].astype(float)
+df["FiberContent"] = df["FiberContent"].astype(float)
+df["SugarContent"] = df["SugarContent"].astype(float)
+df["ProteinContent"] = df["ProteinContent"].astype(float)
 
 # Convert Barcode to digits
 df['Barcode'] = df['Barcode'].str.extract('(\d+)').astype(int)
@@ -71,8 +84,14 @@ app = Flask(__name__)
 CORS(app)
 
 def clean_data(data_string):
-    data_to_list = [data_str.strip('" ') for data_str in data_string[3:-3].split('", "')]
-    return data_to_list
+    if data_string == "character(0)":
+        data_string = "https://via.placeholder.com/300x300"
+        return [data_string.split('", "')]
+    
+    if data_string.startswith('c("') or data_string.endswith('")'):
+        return [data_string[3:-3].split('", "')]
+    
+    return [data_string.replace('\"', '').split('", "')]
     
 
 @app.route("/food-recommendation", methods=['GET'])
@@ -100,6 +119,7 @@ def food_recommendation():
              response = {
                 'food_data': {
                     'Name': food_data['Name'],
+                    'Preptime': food_data['PrepTime'],
                     'foodContents':{
                         'FatContent': food_data['FatContent'],
                         'SaturatedFatContent': food_data['SaturatedFatContent'],
@@ -117,17 +137,22 @@ def food_recommendation():
             }
              return jsonify(response), 200
       
-        nn_recipe_idx = nn_model.kneighbors(barcode_data, n_neighbors=1, return_distance=False)[0][0]
+        nn_recipe_idxs = nn_model.kneighbors(barcode_data, n_neighbors=5, return_distance=False)[0]
+        
+        nn_recipes = [df.iloc[nn_recipe_idx] for nn_recipe_idx in nn_recipe_idxs]
+        # Filter out recommendations with calories higher than 400
+        nn_recipes = [recipe for recipe in nn_recipes if recipe['Calories'] < calorie_limit][0]
 
      
 
         # Use Naive Bayes to find a similar recipe with fewer calories
         similar_food_idx = nb_model.predict(barcode_data)[0]
-        print(similar_food_idx)
+        # print(similar_food_idx)
         similar_food = df[df['Calories'] < calorie_limit].iloc[similar_food_idx]
         response = {
                'food_data': {
                     'Name': food_data['Name'],
+                    'Preptime': food_data['PrepTime'],
                     'foodContents':{
                         'FatContent': food_data['FatContent'],
                         'SaturatedFatContent': food_data['SaturatedFatContent'],
@@ -143,23 +168,25 @@ def food_recommendation():
                     'Images': clean_data(food_data['Images'])
                 },
                 'nearest_recipe': {
-                    'Name': df.iloc[nn_recipe_idx]['Name'],
+                    'Name': nn_recipes['Name'],
+                    'Preptime': nn_recipes['PrepTime'],
                     'foodContents':{
-                        'FatContent': df.iloc[nn_recipe_idx]['FatContent'],
-                        'SaturatedFatContent': df.iloc[nn_recipe_idx]['SaturatedFatContent'],
-                        'CholesterolContent': df.iloc[nn_recipe_idx]['CholesterolContent'],
-                        'SodiumContent': df.iloc[nn_recipe_idx]['SodiumContent'],
-                        'CarbohydrateContent': df.iloc[nn_recipe_idx]['CarbohydrateContent'],
-                        'FiberContent': df.iloc[nn_recipe_idx]['FiberContent'],
-                        'SugarContent': df.iloc[nn_recipe_idx]['SugarContent'],
-                        'ProteinContent': df.iloc[nn_recipe_idx]['ProteinContent'],
-                        'Calories': df.iloc[nn_recipe_idx]['Calories']
+                        'FatContent': nn_recipes['FatContent'],
+                        'SaturatedFatContent': nn_recipes['SaturatedFatContent'],
+                        'CholesterolContent': nn_recipes['CholesterolContent'],
+                        'SodiumContent': nn_recipes['SodiumContent'],
+                        'CarbohydrateContent': nn_recipes['CarbohydrateContent'],
+                        'FiberContent': nn_recipes['FiberContent'],
+                        'SugarContent': nn_recipes['SugarContent'],
+                        'ProteinContent': nn_recipes['ProteinContent'],
+                        'Calories': nn_recipes['Calories']
                     },
-                    'RecipeInstructions': clean_data(df.iloc[nn_recipe_idx]['RecipeInstructions']),
-                    'Images': clean_data(food_data['Images'])
+                    'RecipeInstructions': clean_data(nn_recipes['RecipeInstructions']),
+                    'Images': clean_data(nn_recipes['Images'])
                 },
                 'similar_food_with_less_calories': {
                     'Name': similar_food['Name'],
+                    'Preptime': similar_food['PrepTime'],
                     'foodContents':{
                         'FatContent': similar_food['FatContent'],
                         'SaturatedFatContent': similar_food['SaturatedFatContent'],

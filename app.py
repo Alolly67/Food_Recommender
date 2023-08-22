@@ -118,7 +118,7 @@ def food_recommendation():
              response = {
                 'food_data': {
                     'Name': food_data['Name'],
-                    'Preptime': food_data['PrepTime'],
+                    'PrepTime': food_data['PrepTime'],
                     'foodContents':{
                         'FatContent': food_data['FatContent'],
                         'SaturatedFatContent': food_data['SaturatedFatContent'],
@@ -151,7 +151,7 @@ def food_recommendation():
         response = {
                'food_data': {
                     'Name': food_data['Name'],
-                    'Preptime': food_data['PrepTime'],
+                    'PrepTime': food_data['PrepTime'],
                     'foodContents':{
                         'FatContent': food_data['FatContent'],
                         'SaturatedFatContent': food_data['SaturatedFatContent'],
@@ -168,7 +168,7 @@ def food_recommendation():
                 },
                 'nearest_recipe': {
                     'Name': nn_recipes['Name'],
-                    'Preptime': nn_recipes['PrepTime'],
+                    'PrepTime': nn_recipes['PrepTime'],
                     'foodContents':{
                         'FatContent': nn_recipes['FatContent'],
                         'SaturatedFatContent': nn_recipes['SaturatedFatContent'],
@@ -185,7 +185,7 @@ def food_recommendation():
                 },
                 'similar_food_with_less_calories': {
                     'Name': similar_food['Name'],
-                    'Preptime': similar_food['PrepTime'],
+                    'PrepTime': similar_food['PrepTime'],
                     'foodContents':{
                         'FatContent': similar_food['FatContent'],
                         'SaturatedFatContent': similar_food['SaturatedFatContent'],

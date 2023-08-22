@@ -85,14 +85,13 @@ CORS(app)
 
 def clean_data(data_string):
     if data_string == "character(0)":
-        data_string = "https://via.placeholder.com/300x300"
-        return [data_string.split('", "')]
+        data_string = ""
+        return data_string.split('", "')
     
     if data_string.startswith('c("') or data_string.endswith('")'):
-        return [data_string[3:-3].split('", "')]
+        return data_string[3:-3].split('", "')
     
-    return [data_string.replace('\"', '').split('", "')]
-    
+    return data_string.replace('\"', '').split('", "')   
 
 @app.route("/food-recommendation", methods=['GET'])
 # Food Recommendation Resource
@@ -217,4 +216,4 @@ def food_recommendation():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    # app.run(debug=True, host='192.168.14.226', port=5000)
+    # app.run(debug=True, host='192.168.1.57', port=5000)
